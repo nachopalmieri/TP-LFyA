@@ -40,4 +40,4 @@ b = cal(a)
 print(b)
 
 # otra alternativa: https://saintuszephir.com/programacion/python/calculadora-en-python-usando-expresiones-regulares-desde-cero/
-
+# Alternativa Mas conveniente usando ply: https://github.com/dabeaz/ply/blob/master/example/calc/calc.py
