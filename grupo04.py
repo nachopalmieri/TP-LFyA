@@ -57,3 +57,6 @@ def calculator(input_operation):
                     break
     return ListaAux2
 
+pasar = (input())
+resultado = calculator(pasar)
+
