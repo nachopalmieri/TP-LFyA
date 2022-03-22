@@ -3,7 +3,6 @@ from ntpath import join
 from operator import index
 
 
-operandos = ["0","1","2","3","4","5","6","7","8","9"]
 operadores = ["-","+","/","*","^"] ## Ordenados por peso
 
 
