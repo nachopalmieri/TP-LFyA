@@ -1,50 +1,125 @@
-#Alternativa 1:
+from ast import NotIn
+from ntpath import join
+from operator import index
 
-from audioop import mul
-from ipaddress import summarize_address_range
-from operator import truediv
-from re import L
+
+operandos = ["0","1","2","3","4","5","6","7","8","9"]
+operadores = ["-","+","/","*","^"] ## Ordenados por peso
+
 
 def calculator(input_operation):
-    cadena_limpia = input_operation.replace(" ","")
-    resultado = eval(input_operation)
-    lista = list(cadena_limpia)
-    resultadoFinal = 0
-    listaAuxiliar = []
-    ListaAux2 = []
-    Posicioni = 0
-    Posicionf = len(lista)
+    
+    ## Convertimos ** a ^
+    ## Trabajamos los caso en los que haya * o / seguidos de un -
+    ecuacion_limpia = input_operation.replace(" ", "")
+    ecuacion = list(ecuacion_limpia)
     contador = 0
-    bandera = 0 
-    for indice in range(Posicioni,Posicionf):
-        if (lista[indice] == "+") | (lista[indice] == "-") | (lista[indice] == "/") : ##Suma, resta, division
-            listaAuxiliar.append(lista[indice - 1])
-            listaAuxiliar.append(lista[indice])
-            listaAuxiliar.append(lista[indice + 1])
-            operacionstr = "".join([str(_) for _ in listaAuxiliar])
-            ListaAux2.append(resultado)
-            ListaAux2.append(operacionstr)
-            break
-        else:
-            if (lista[indice] == "*"): 
-                if (lista[indice + 1] == "*"): ##Potencia
-                    listaAuxiliar.append(lista[indice - 1])
-                    listaAuxiliar.append(lista[indice])
-                    listaAuxiliar.append(lista[indice + 1])
-                    listaAuxiliar.append(lista[indice + 2])
-                    operacionstr = "".join([str(_) for _ in listaAuxiliar])
-                    ListaAux2.append(resultado)
-                    ListaAux2.append(operacionstr)
-                    break
-                else: ##Multiplicacion
-                    listaAuxiliar.append(lista[indice - 1])
-                    listaAuxiliar.append(lista[indice])
-                    listaAuxiliar.append(lista[indice + 1])
-                    operacionstr = "".join([str(_) for _ in listaAuxiliar])
-                    ListaAux2.append(resultado)
-                    ListaAux2.append(operacionstr)
-                    break
-    return tuple(ListaAux2)
+    for caracter in ecuacion:
+        if caracter == "*":
+            if  ecuacion[contador+1] == "*":
+                ecuacion[contador] = "^"
+                ecuacion[contador+1] = ""
+            elif ecuacion[contador+1] == "-":
+                indiceNegativo = contador + 1
+                numeroNegativo = ecuacion[contador + 2]
+                ecuacion[indiceNegativo] = str(float(numeroNegativo) * (-1))
+                ecuacion[contador+2] = ""
+        elif caracter == "/":
+            if ecuacion[contador+1] == "-":
+                indiceNegativo = contador + 1
+                numeroNegativo = ecuacion[contador + 2]
+                ecuacion[indiceNegativo] = str(float(numeroNegativo) / (-1))
+                ecuacion[contador+2] = ""
+        contador = contador + 1
+    for item in ecuacion:
+        if item == "":
+            ecuacion.remove(item)
 
-pasar = (input())
-resultado = calculator(pasar)
+    
+    resultadoEval = eval(ecuacion_limpia) ## Resuelve la cadena entera
+    str(resultadoEval)
+    resultadoFinal = 0
+
+    banderaPrimeraOperacion = 0
+    while (resultadoEval != resultadoFinal):
+        indice_apertura, indice_cierre = buscar_bloque(ecuacion)
+
+        ## Evaluar lo que hay dentro de ese bloque
+        operadores_bloque=[]
+        for indice in range(indice_apertura, indice_cierre):
+            caracter = ecuacion[indice]
+            if caracter in operadores:
+                peso = operadores.index(caracter)
+                operadores_bloque.append([caracter,indice,peso])
+
+        ## Teniendo los operadores dentro del bloque
+        ## empezar a operarlos
+        operadores_bloque.sort(key= lambda op : op[2], reverse=True)
+        bandera = 0
+
+        longitudOperadores_bloque = len(operadores_bloque)
+        for item in operadores_bloque:
+            operador, indice , peso = item
+            
+            ## Acomodamos los indices en caso de requerirlo
+            if bandera != 0:
+                operadores_bloque.pop(bandera-1)
+                for item2 in operadores_bloque:
+                    if (indice < item2[1]):
+                        indice = indice - 2
+
+            ## Operamos segun el peso o prioridad de operadores
+            if operador=="*":
+                resultado = float(ecuacion[indice-1]) * float(ecuacion[indice+1])
+            elif operador=="/":
+                resultado = float(ecuacion[indice-1]) / float(ecuacion[indice+1])
+            elif operador=="+":
+                resultado = float(ecuacion[indice-1]) + float(ecuacion[indice+1])
+            elif operador == "-":
+                resultado = float(ecuacion[indice-1]) - float(ecuacion[indice+1])
+            elif operador == "^":
+                resultado = float(ecuacion[indice-1]) ** float(ecuacion[indice+1])
+
+            ## Guardamos primera operacion
+            if banderaPrimeraOperacion == 0:
+                primeraOperacion = str(ecuacion[indice-1])+operador+(ecuacion[indice+1])
+                banderaPrimeraOperacion = 1
+            
+            ## Eliminamos los operandos ya utilizados
+            ecuacion.pop(indice)
+            ecuacion.pop(indice)
+            ecuacion[indice-1] = resultado
+
+            ## Eliminamos parentesis
+            if (bandera == longitudOperadores_bloque - 1):
+                if (len(ecuacion) != 1):
+                    ecuacion.pop(indice)
+                    ecuacion.pop(indice-2)
+            bandera = bandera + 1
+        
+        ## Si solo queda un elemento en la lista, es el valor final
+        if len(ecuacion) == 1:
+            resultadoFinal = ecuacion[0]
+    tupla = (resultadoFinal, primeraOperacion)
+    return tupla
+
+
+def buscar_bloque(ecuacion):
+    ## Encontrar bloques () mas internos y a la izquierda posible
+    if ")" in ecuacion:
+        indice_cierre = ecuacion.index(")")
+
+        caracter=""
+        indice = indice_cierre
+        while(caracter != "("):
+            indice = indice - 1
+            caracter = ecuacion[indice]
+
+        indice_apertura = indice
+    else:
+        indice_apertura = 0
+        indice_cierre = len(ecuacion)-1
+    return indice_apertura, indice_cierre
+
+
+resultado = calculator(input())
