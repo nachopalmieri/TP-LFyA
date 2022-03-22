@@ -9,11 +9,6 @@ def calculator(input_operation):
     cadena_limpia = input_operation.replace(" ","")
     resultado = eval(input_operation)
     lista = list(cadena_limpia)
-    ###cantidad = len(lista)
-    ###listaPrueba = lista
-    ###indice = 0
-    ###posicion = 0
-    ###bandera = True
     resultadoFinal = 0
     listaAuxiliar = []
     ListaAux2 = []
@@ -27,10 +22,8 @@ def calculator(input_operation):
             listaAuxiliar.append(lista[indice])
             listaAuxiliar.append(lista[indice + 1])
             operacionstr = "".join([str(_) for _ in listaAuxiliar])
-            ListaAux2.append("(")
             ListaAux2.append(resultado)
             ListaAux2.append(operacionstr)
-            ListaAux2.append(")")
             break
         else:
             if (lista[indice] == "*"): 
@@ -40,23 +33,18 @@ def calculator(input_operation):
                     listaAuxiliar.append(lista[indice + 1])
                     listaAuxiliar.append(lista[indice + 2])
                     operacionstr = "".join([str(_) for _ in listaAuxiliar])
-                    ListaAux2.append("(")
                     ListaAux2.append(resultado)
                     ListaAux2.append(operacionstr)
-                    ListaAux2.append(")")
                     break
                 else: ##Multiplicacion
                     listaAuxiliar.append(lista[indice - 1])
                     listaAuxiliar.append(lista[indice])
                     listaAuxiliar.append(lista[indice + 1])
                     operacionstr = "".join([str(_) for _ in listaAuxiliar])
-                    ListaAux2.append("(")
                     ListaAux2.append(resultado)
                     ListaAux2.append(operacionstr)
-                    ListaAux2.append(")")
                     break
-    return ListaAux2
+    return tuple(ListaAux2)
 
 pasar = (input())
 resultado = calculator(pasar)
-
